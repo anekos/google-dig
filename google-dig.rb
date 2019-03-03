@@ -14,7 +14,7 @@ require 'uri'
 
 # Option parser {{{
 class Options
-  attr_reader :keyword, :width, :height, :pages, :offset, :chrysoberyl
+  attr_reader :keyword, :width, :height, :pages, :offset, :chrysoberyl, :size, :minimum
 
   def initialize (argv)
     init
@@ -23,6 +23,10 @@ class Options
 
   def range
     self.offset ... (self.offset + self.pages)
+  end
+
+  def size_char
+    @size and @size[0]
   end
 
   private
@@ -36,6 +40,8 @@ class Options
       opt.on('-w WIDTH', '--width WIDTH',  'Image width') {|v| @width = v.to_i }
       opt.on('-h HEIGHT', '--height HEIGHT',  'Image height') {|v| @height = v.to_i }
       opt.on('-p PAGES', '--pages PAGES',  'Pages') {|v| @pages = v.to_i }
+      opt.on('-s SIZE', '--size SIZE',  'Size (large/middle/small/icon)') {|v| @size = v }
+      opt.on('-m MINIMUM', '--minimum MINIMUM',  'Minimum (qsvga/vga/svga/xga/2mp/4mp/6mp/8mp/10mp/12mp/15mp/20mp/40mp/70mp)') {|v| @minimum = v }
       opt.on('-o OFFSET', '--offset PAGES',  'Offset') {|v| @offset = v.to_i }
       opt.on('-c', '--chrysoberyl') { @chrysoberyl = true }
       opt.parse!(argv)
@@ -110,13 +116,18 @@ class App
       :tbm => 'isch',
       :ijn => (page || 0),
     }
-    if @options.width or @options.height
+    if @options.width or @options.height or @options.minimum or @options.size_char
       tbs = {:isz => 'ex'}
       tbs[:iszw] = @options.width if @options.width
       tbs[:iszh] = @options.height if @options.height
+      tbs[:isz] = @options.size_char if @options.size_char
+      if @options.minimum
+        tbs[:isz] = 'lt'
+        tbs[:islt] = @options.minimum
+      end
       tbs_query = tbs.map {|k, v| '%s:%s' % [k, v] } .join(',')
+      params[:tbs] = tbs_query
     end
-    params[:tbs] = tbs_query
     query = params.map {|k, v| '%s=%s' % [k, v].map {|it| URI.escape(it.to_s) } } .join('&')
     BASE_URL + '?' + query
   end
