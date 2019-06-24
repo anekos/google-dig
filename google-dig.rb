@@ -21,7 +21,7 @@ class Options
     parse(argv)
   end
 
-  def range
+  def page_range
     self.offset ... (self.offset + self.pages)
   end
 
@@ -73,7 +73,7 @@ class App
   end
 
   def start
-    @options.range.each_with_index do
+    @options.page_range.each_with_index do
       |page, index|
       sleep(1.0) if 0 < index
       self.get(page)
@@ -125,8 +125,7 @@ class App
         tbs[:isz] = 'lt'
         tbs[:islt] = @options.minimum
       end
-      tbs_query = tbs.map {|k, v| '%s:%s' % [k, v] } .join(',')
-      params[:tbs] = tbs_query
+      params[:tbs] = tbs.map {|k, v| '%s:%s' % [k, v] } .join(',')
     end
     query = params.map {|k, v| '%s=%s' % [k, v].map {|it| URI.escape(it.to_s) } } .join('&')
     BASE_URL + '?' + query
