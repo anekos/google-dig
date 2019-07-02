@@ -14,14 +14,14 @@ require 'uri'
 
 # Option parser {{{
 class Options
-  attr_reader :keyword, :width, :height, :pages, :offset, :chrysoberyl, :size, :minimum
+  attr_reader :keyword, :width, :height, :pages, :offset, :chrysoberyl, :size, :minimum, :range
 
   def initialize (argv)
     init
     parse(argv)
   end
 
-  def range
+  def page_range
     self.offset ... (self.offset + self.pages)
   end
 
@@ -43,6 +43,7 @@ class Options
       opt.on('-s SIZE', '--size SIZE',  'Size (large/middle/small/icon)') {|v| @size = v }
       opt.on('-m MINIMUM', '--minimum MINIMUM',  'Minimum (qsvga/vga/svga/xga/2mp/4mp/6mp/8mp/10mp/12mp/15mp/20mp/40mp/70mp)') {|v| @minimum = v }
       opt.on('-o OFFSET', '--offset PAGES',  'Offset') {|v| @offset = v.to_i }
+      opt.on('-r RANGE', '--range RANGE',  'Range (any/hour/day/week/month/year)') {|v| @range = v }
       opt.on('-c', '--chrysoberyl') { @chrysoberyl = true }
       opt.parse!(argv)
     end
@@ -73,7 +74,7 @@ class App
   end
 
   def start
-    @options.range.each_with_index do
+    @options.page_range.each_with_index do
       |page, index|
       sleep(1.0) if 0 < index
       self.get(page)
@@ -116,11 +117,12 @@ class App
       :tbm => 'isch',
       :ijn => (page || 0),
     }
-    if @options.width or @options.height or @options.minimum or @options.size_char
+    if @options.width or @options.height or @options.minimum or @options.size_char or @options.range
       tbs = {:isz => 'ex'}
       tbs[:iszw] = @options.width if @options.width
       tbs[:iszh] = @options.height if @options.height
       tbs[:isz] = @options.size_char if @options.size_char
+      tbs[:qdr] = @options.range[0] if @options.range
       if @options.minimum
         tbs[:isz] = 'lt'
         tbs[:islt] = @options.minimum
